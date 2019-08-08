@@ -644,14 +644,18 @@ write.csv(phe_lt, "phe.lt.csv")
 
 # Decomposition -----------------------------------------------------------
 
-#Extract out two life tables, one for 2001 male data in the bottom deprivation decile, and one for the top decile
+#Extract out two life tables
+#one for 2001 male data in the bottom deprivation decile, and
+#one for the top decile
 
 life_table_m_01_bottom <- life_table %>%
   filter(Year == "2001", Sex == "Male", deprivation_decile == "1")
 life_table_m_01_top <- life_table %>%
   filter(Year == "2001", Sex == "Male", deprivation_decile == "10")
 
-#Borrow Bennett et al decomposition function code to decompose LE inequality between deciles for men in 2001         
+#Borrow Bennett et al decomposition function code to decompose LE inequality
+#between deciles for men in 2001
+#remove Tx variables as not clear why these needed for decomposition
 
 CalculateDiffTable <- function(lt1, lt2) {
   # If rates and sexes are provided, then the life table is calculated using
@@ -664,28 +668,36 @@ CalculateDiffTable <- function(lt1, lt2) {
     age = lt1$age_grp,
     lx1 = (lt1$lx)/100000,
     Lx1 = (lt1$Lx)/100000, 
-    Tx1 = lt1$Tx, 
     lx2 = (lt2$lx)/100000,
     Lx2 = (lt2$Lx)/100000, 
-    Tx2 = lt2$Tx,
     ex1 = lt1$ex,
     ex2 = lt2$ex)
 }			
 
-#Run this code on the two abridged life tables for top and bottom deciles of males for 2001
+#Run this code on the two abridged life tables for top
+#and bottom deciles of males for 2001
 
 lifetab_agedecomp <- CalculateDiffTable(lt1 = life_table_m_01_top, lt2 = life_table_m_01_bottom)
 
 #See https://www.measureevaluation.org/resources/training/online-courses-and-resources/non-certificate-courses-and-mini-tutorials/multiple-decrement-life-tables/lesson-5
-#methodology for calculating age-specific decomposition including direct, indirect and total effects
+#methodology for calculating age-specific decomposition including direct,
+#indirect and total effects
 
 lifetab_agedecomp <- lifetab_agedecomp %>%
-  mutate(de = lx1*((Lx2/lx2)-(Lx1/lx1)),
-         ie = lx1*(dplyr::lead(lx2)/lx2)-dplyr::lead(lx1)*dplyr::lead(ex2)
+  mutate(de #direct effect
+         = lx1*((Lx2/lx2)-(Lx1/lx1)),
+         ie #indirect effect 
+         = (lx1*dplyr::lead(lx2)/lx2-dplyr::lead(lx1))*dplyr::lead(ex2),
+         te #total effect
+         = de+ie
   )
 
+lifetab_agedecomp
 
-
+#Data frame now shows decomposition of life expectancy between 
+#deciles 1 and 10 for males in 2001 
+#separated by direct effects of deaths in age interval x, 
+#indirect effects and total
 
 
 
