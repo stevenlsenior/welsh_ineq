@@ -499,18 +499,28 @@ le_data1 <- le_data1 %>%
 
 life_table <- le_data1 %>%
   group_by(Year, Sex, deprivation_decile) %>%
-  mutate(ax = if_else(age_grp %in% c("0"), 0.1, 0.5),
-         Mx = deaths/popn, 
-         n = if_else(age_grp <90, dplyr::lead(age_grp)-age_grp, 2/Mx), 
-         qx = if_else(age_grp <90, (n*Mx)/(1+n*(1-ax)*Mx), 1),
-         px = 1-qx,
-         lx = if_else(age_grp %in% c("0"), 100000, 1),
+  mutate(ax #average fraction of interval lived
+         = if_else(age_grp %in% c("0"), 0.1, 0.5),
+         Mx #age-specific death rate
+         = deaths/popn, 
+         n #number of years between intervals
+         = if_else(age_grp <90, dplyr::lead(age_grp)-age_grp, 2/Mx), 
+         qx #proportion dying in interval
+         = if_else(age_grp <90, (n*Mx)/(1+n*(1-ax)*Mx), 1),
+         px #proportion surviving 
+         = 1-qx,
+         lx #number alive at age x
+         = if_else(age_grp %in% c("0"), 100000, 1),
          px_lag = dplyr::lag(px, default = 1),
          lx = if_else(age_grp >0, cumprod(lx*px_lag), lx),
-         dx = lx - dplyr::lead(lx, default = 0),
-         Lx = if_else(age_grp <90, n*(dplyr::lead(lx)+(ax*dx)), lx/Mx),
-         Tx = rev(cumsum(rev(Lx))),
-         ex = Tx/lx)
+         dx #number dying in interval
+         = lx - dplyr::lead(lx, default = 0),
+         Lx #total years lived in interval
+         = if_else(age_grp <90, n*(dplyr::lead(lx)+(ax*dx)), lx/Mx),
+         Tx #total years lived beyond age x
+         = rev(cumsum(rev(Lx))),
+         ex #estimated life expectancy
+         = Tx/lx)
          
 #This gives LEs approximately equal to the PHEindicatormethods package
 #next step to explore why differences
